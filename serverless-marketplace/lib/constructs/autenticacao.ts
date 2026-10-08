@@ -4,6 +4,7 @@ import { Construct } from 'constructs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as path from 'path';
+import * as iam from 'aws-cdk-lib/aws-iam';
 
 
 export class Autenticacao extends Construct {
@@ -40,6 +41,19 @@ export class Autenticacao extends Construct {
       accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,// cdk destroy apaga tudo (só para fins didáticos)
       lambdaTriggers: { postConfirmation: posConfirmacao },
     });
+
+    posConfirmacao.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['cognito-idp:AdminAddUserToGroup'],  // só essa ação
+        resources: [
+          cdk.Stack.of(this).formatArn({
+            service: 'cognito-idp',
+            resource: 'userpool',
+            resourceName: '*',
+          }),
+        ],
+      }),
+    );
 
     this.userPoolClient = this.userPool.addClient('AppClient', {
       userPoolClientName: 'marketplace-frontend',
