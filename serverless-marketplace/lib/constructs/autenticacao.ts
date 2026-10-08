@@ -16,14 +16,31 @@ export class Autenticacao extends Construct {
       selfSignUpEnabled: true,            // qualquer pessoa pode se cadastrar
       signInAliases: { email: true },     // o login é feito com e-mail
       autoVerify: { email: true },        // o Cognito envia um código para confirmar o e-mail
-      removalPolicy: cdk.RemovalPolicy.DESTROY, // cdk destroy apaga tudo (só para fins didáticos)
+      removalPolicy: cdk.RemovalPolicy.DESTROY, 
+      customAttributes: {
+        role: new cognito.StringAttribute({ minLen: 1, maxLen: 20, mutable: false }),
+      },
+      passwordPolicy: {
+        minLength: 8,
+        requireLowercase: true,
+        requireUppercase: true,
+        requireDigits: true,
+        requireSymbols: false,
+      },
+      accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,// cdk destroy apaga tudo (só para fins didáticos)
     });
 
     this.userPoolClient = this.userPool.addClient('AppClient', {
       userPoolClientName: 'marketplace-frontend',
       generateSecret: false,        // site roda no navegador: não dá para esconder um secret lá
       authFlows: { userSrp: true }, // login seguro, a senha não viaja em texto puro
-      preventUserExistenceErrors: true, // não revela se um e-mail já está cadastrado
+      preventUserExistenceErrors: true, 
+      readAttributes: new cognito.ClientAttributes()
+        .withStandardAttributes({ email: true, emailVerified: true })
+        .withCustomAttributes('role'),
+      writeAttributes: new cognito.ClientAttributes()
+        .withStandardAttributes({ email: true })
+        .withCustomAttributes('role'),// não revela se um e-mail já está cadastrado
     });
 
     new cognito.CfnUserPoolGroup(this, 'GrupoCliente', {
@@ -37,6 +54,6 @@ export class Autenticacao extends Construct {
       groupName: 'vendedor',
       description: 'Vendedores que cadastram produtos',
     });
-    
+
   }
 }
