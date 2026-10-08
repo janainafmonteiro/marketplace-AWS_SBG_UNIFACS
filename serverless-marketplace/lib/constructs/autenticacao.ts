@@ -25,5 +25,18 @@ export class Autenticacao extends Construct {
       authFlows: { userSrp: true }, // login seguro, a senha não viaja em texto puro
       preventUserExistenceErrors: true, // não revela se um e-mail já está cadastrado
     });
+
+    new cognito.CfnUserPoolGroup(this, 'GrupoCliente', {
+      userPoolId: this.userPool.userPoolId,
+      groupName: 'cliente',
+      description: 'Compradores do marketplace',
+    });
+
+    new cognito.CfnUserPoolGroup(this, 'GrupoVendedor', {
+      userPoolId: this.userPool.userPoolId,
+      groupName: 'vendedor',
+      description: 'Vendedores que cadastram produtos',
+    });
+    
   }
 }
