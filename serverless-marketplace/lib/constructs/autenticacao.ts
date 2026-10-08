@@ -1,6 +1,9 @@
 import * as cdk from 'aws-cdk-lib/core';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
 import { Construct } from 'constructs';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
+import * as path from 'path';
 
 
 export class Autenticacao extends Construct {
@@ -10,6 +13,13 @@ export class Autenticacao extends Construct {
 
   constructor(scope: Construct, id: string) {
     super(scope, id);
+
+    const posConfirmacao = new NodejsFunction(this, 'PosConfirmacao', {
+      entry: path.join(__dirname, '../../lambda/pos-confirmacao/index.ts'), // onde está o código
+      runtime: lambda.Runtime.NODEJS_22_X,
+      timeout: cdk.Duration.seconds(10),  // se passar de 10s, a AWS interrompe
+      memorySize: 128,                    // o mínimo, suficiente para essa função
+    });
 
     this.userPool = new cognito.UserPool(this, 'UserPool', {
       userPoolName: 'marketplace-usuarios',
@@ -28,6 +38,7 @@ export class Autenticacao extends Construct {
         requireSymbols: false,
       },
       accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,// cdk destroy apaga tudo (só para fins didáticos)
+      lambdaTriggers: { postConfirmation: posConfirmacao },
     });
 
     this.userPoolClient = this.userPool.addClient('AppClient', {
